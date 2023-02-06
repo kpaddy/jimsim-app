@@ -183,7 +183,7 @@ async def fetch_all_data( ):
 
 def run():
    try:
-      respose_data =  asyncio.run( fetch_all_data() )
+      respose_data =  asyncio.run( save_to_db() )
       return respose_data
    except:
       print('error')

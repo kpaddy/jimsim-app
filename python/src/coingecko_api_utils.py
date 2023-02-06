@@ -55,9 +55,9 @@ def geckoHistorical(ticker, token_name, vs_currency='usd', days='max'):
     url = f"https://api.coingecko.com/api/v3/coins/{token_name}/market_chart"
     params = {"vs_currency":{vs_currency}, "days":days}
     r = requests.get(url, params).json()
-    print( r.keys() )
-    outfile = open("../data/sol_historical_gecko" + token_name +".json", 'w')
-    json.dump( r , outfile )
+    #print( r.keys() )
+    #outfile = open("../data/sol_historical_gecko" + token_name +".json", 'w')
+    #json.dump( r , outfile )
     prices = pd.DataFrame(r['prices'])
     market_caps = pd.DataFrame(r['market_caps'])
     total_volumes = pd.DataFrame(r['total_volumes'])
@@ -67,7 +67,7 @@ def geckoHistorical(ticker, token_name, vs_currency='usd', days='max'):
     df.rename(columns = {'date':'txn_time',  'market_caps':'market_cap', 'total_volumes':'total_volume'}, inplace = True)
     df.set_index('txn_time', inplace=True)
     df['token'] = ticker
-    df.to_csv("../data/sol_historical_gecko" + ticker +".csv")
+    #df.to_csv("../data/sol_historical_gecko" + ticker +".csv")
     #return df
     #TokenHistoryPriceProcessor().save_price_to_db( df.to_dict( ))
     rows = []
@@ -166,13 +166,12 @@ def pcsPairInfo(base, quote):
 
 #print( geckoHistorical( 'mSOL',  'marinade-staked-sol') )
 #print( geckoHistorical( 'jito-staked-sol' ) )
+#
+#geckoHistorical( 'RAY' , 'raydium' )
+#geckoHistorical( 'SOL' , 'solana' )
+#geckoHistorical( 'USDC', 'usd-coin' )
+#geckoHistorical( 'USDT', 'tether' )
 
-#print( geckoHistorical( 'usd-coin' ) )
-#print( geckoHistorical( 'tether' ) )
-#print( geckoHistorical( 'RAY' , 'raydium' ) )
-#print( geckoHistorical( 'SOL' , 'solana' ) )
-#print( geckoHistorical( 'USDC', 'usd-coin' ) )
-#print( geckoHistorical( 'USDT', 'tether' ) )
-#print( geckoHistorical( 'lido-staked-sol'))
+geckoHistorical( 'mSOL', 'lido-staked-sol' ) 
 #print( geckoMarkets(  'frakt-token' ))
 #print( pcsPairInfo ( 'cake', 'bnb' ))
