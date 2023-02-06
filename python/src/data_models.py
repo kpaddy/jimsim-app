@@ -47,6 +47,7 @@ class DeFiTokenPrice(Base):
 class DeFiPoolActivities(Base):
    __tablename__ = "defi_pool_activities"
    txn_time = Column(DateTime(timezone=False) , primary_key=True)
+   pool_address = Column(String)
    program_id = Column(String)
    action_type = Column(String)
    user_account = Column(String)
@@ -61,6 +62,7 @@ class DeFiSwapActivities(Base):
    __tablename__ = "defi_swap_activities"
    txn_time = Column(DateTime(timezone=False) , primary_key=True)
    program_address = Column(String)
+   pool_address = Column(String)
    aggregator_address = Column(String)
    user_account = Column(String)
    source_mint = Column(String)

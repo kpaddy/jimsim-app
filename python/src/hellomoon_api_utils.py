@@ -59,7 +59,7 @@ class DefiPoolActivitiesProcessor( object ):
 #jan21
 EPOCTIME = 1674309533
 
-def get_pool_withdrawls_deposits( token1, token2, t1, t2 ):
+def get_pool_withdrawls_deposits( token1, token2, t1, t2, pool_address ):
    url = "https://rest-api.hellomoon.io/v0/defi/liquidity-pools/withdrawals-deposits"
    payload = {
       "tokenMintA": token1,
@@ -81,13 +81,14 @@ def get_pool_withdrawls_deposits( token1, token2, t1, t2 ):
    for row in data["data"] :
       newrow = { v : row[k] for k,v in mapping.items() }
       newrow['txn_time'] = datetime.fromtimestamp( int(newrow['txn_time']) )
+      newrow['pool_address'] = pool_address
       new_recs.append( newrow )
       #print( newrow['transaction_signature'])
    if len(new_recs) > 0:
       print(f"Save {len(new_recs)} records to defi_pool_activities table ")
       DefiPoolActivitiesProcessor().save_activities_to_db( new_recs )
 
-def get_swaps_records( token1, token2 ):
+def get_swaps_records( token1, token2, pool_address ):
    url = "https://rest-api.hellomoon.io/v0/defi/swaps"
    payload = {
       "sourceMint": token1,
@@ -111,6 +112,8 @@ def get_swaps_records( token1, token2 ):
    for row in data["data"] :
       newrow = { v : row[k] for k,v in mapping.items() }
       newrow['txn_time'] = datetime.fromtimestamp( int(newrow['txn_time']) )
+      newrow['pool_address'] = pool_address
+
       new_recs.append( newrow )
       #print( newrow['transaction_signature'])
    if len(new_recs) > 0:
@@ -166,9 +169,9 @@ def get_orca_pool_balances( pool_address, t1, t2):
 
 #get_pool_emissions( ORCA_STSOL_SOL, 'stSOL', 'SOL' ) 
 #get_pool_emissions( ORCA_SLCL_USDC, 'SLCL', 'USDC' )
-
-get_pool_withdrawls_deposits(SOL, USDC, 'SOL', 'USDC')
-get_swaps_records(SOL, USDC)
+pool_address = '7qbRF6YsyGuLUVs6Y1q64bdVrfe4ZcUUz1JRdoVNUJnm'
+get_pool_withdrawls_deposits(SOL, USDC, 'SOL', 'USDC', pool_address)
+get_swaps_records(SOL, USDC, pool_address)
 #Wrapped SOL ==> So11111111111111111111111111111111111111112
 #USDC ==> EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 

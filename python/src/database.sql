@@ -1,3 +1,24 @@
+CREATE TABLE defi_product_master
+(
+   product_id  serial PRIMARY KEY , 
+   product_type varchar( 100 ),
+   project_name varchar( 100 ),
+   pool_name varchar( 100 ),
+   pool_address varchar( 100 ),
+   token_a_name varchar( 100 ),
+   token_a_symbol varchar( 100 ),
+   token_a_address varchar( 100 ),
+   token_a_decimals smallint,
+   token_b_name varchar( 100 ),
+   token_b_symbol varchar( 100 ),
+   token_b_address varchar( 100 ),
+   token_b_decimals smallint,
+   inspection_date date,
+   protocol_fee_rate decimal,
+   lp_fee_rate decimal,   
+   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()    
+);
+
 CREATE TABLE defi_yield_performance (
    txn_time timestamp without time zone NOT NULL,
    partition_by_day smallint,
@@ -30,30 +51,11 @@ CREATE TABLE defi_yield_performance (
    pool_age int
 );
 
-CREATE TABLE defi_product_master
-(
-   product_id  serial PRIMARY KEY , 
-   product_type varchar( 100 ),
-   project_name varchar( 100 ),
-   pool_name varchar( 100 ),
-   pool_address varchar( 100 ),
-   token_a_name varchar( 100 ),
-   token_a_symbol varchar( 100 ),
-   token_a_address varchar( 100 ),
-   token_a_decimals smallint,
-   token_b_name varchar( 100 ),
-   token_b_symbol varchar( 100 ),
-   token_b_address varchar( 100 ),
-   token_b_decimals smallint,
-   inspection_date date,
-   protocol_fee_rate decimal,
-   lp_fee_rate decimal,   
-   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()    
-);
 CREATE TABLE defi_pool_activities
 (
     txn_time timestamp without time zone NOT NULL,
     program_id VARCHAR ( 64 ), 
+    pool_address VARCHAR ( 64 ), 
     action_type VARCHAR ( 64 ), 
     user_account VARCHAR ( 64 ), 
     token_mint_a VARCHAR ( 64 ), 
@@ -68,6 +70,7 @@ CREATE TABLE defi_swap_activities
 (
     txn_time timestamp without time zone NOT NULL,
     program_address VARCHAR ( 64 ), 
+    pool_address VARCHAR ( 64 ), 
     aggregator_address VARCHAR ( 64 ), 
     user_account VARCHAR ( 64 ), 
     source_mint VARCHAR ( 64 ), 
