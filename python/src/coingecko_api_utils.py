@@ -13,20 +13,6 @@ get_protocol_endpoint = "https://api.llama.fi/protocol/{protocol}"
 class TokenHistoryPriceProcessor( object ):
    def __init__(self ) -> None:
       conn_string = 'postgresql://{}:{}@{}/{}'.format( os.getenv("db_user") , os.getenv("db_pass"), os.getenv("db_host"), os.getenv("db_name"))
-      '''
-      self.db  = create_engine(
-            engine.url.URL(
-            drivername=driver_name,
-            username= os.getenv("db_user") ,
-            password=os.getenv("db_pass"),
-            database=os.getenv("db_name"),
-            query=query_string,
-      ),
-      pool_size=5,
-      max_overflow=2,
-      pool_timeout=30,
-      pool_recycle=1800)
-      '''
       self.db = create_engine(conn_string)
       self._conn = self.db.connect()
 
@@ -187,8 +173,6 @@ def pcsPairInfo(base, quote):
 #print( geckoHistorical( 'SOL' , 'solana' ) )
 #print( geckoHistorical( 'USDC', 'usd-coin' ) )
 #print( geckoHistorical( 'USDT', 'tether' ) )
-
-
 #print( geckoHistorical( 'lido-staked-sol'))
 #print( geckoMarkets(  'frakt-token' ))
 #print( pcsPairInfo ( 'cake', 'bnb' ))

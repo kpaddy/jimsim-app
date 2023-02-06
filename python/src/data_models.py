@@ -4,39 +4,36 @@ from sqlalchemy import Table, Column, Integer, SMALLINT, String, MetaData, DateT
 Base = declarative_base()
 from sqlalchemy.sql import func
 
-class GameActivitiesTxn(Base):
-   __tablename__ = "sol_game_activities_txn"
-   activity_id = Column(Integer, primary_key=True)
-   project_id = Column(SMALLINT)
-   program_id = Column(SMALLINT)
-   primary_activity_type_id = Column(SMALLINT)   
-   activity_type_id = Column(SMALLINT)   
-   instruction_id =  Column(SMALLINT)   
-   player_address = Column(String)
-   source_address = Column(String)
-   desti_address = Column(String)
-   mint_address = Column(String)
-   owner_address = Column(String)
-   wallet_address = Column(String)
-   amount = Column(Integer)
-   slot = Column(Integer)
-   txn_dt = Column(DateTime(timezone=False))
-   created_at = Column(DateTime(timezone=False), server_default=func.now())
-
-
 class DefiYieldPerformance(Base):
    __tablename__ = "defi_yield_performance"
    txn_time = Column(DateTime(timezone=False) , primary_key=True)
    partition_by_day = Column(SMALLINT)
-   pair_id = Column(String)
-   protocol_id = Column(String)
+   pool_address = Column(String)
+   protocol_name = Column(String)
    yield_type = Column(String)
-   apy_rate = Column(DECIMAL)
+   price = Column(DECIMAL)
    tvl = Column(DECIMAL)
-   vol = Column(BigInteger)
-   apy_history = Column(DECIMAL)
-   tvl_history = Column(DECIMAL)
-   vol_history = Column(BigInteger)
+   vol_day = Column(DECIMAL)
+   vol_week = Column(DECIMAL)
+   vol_month = Column(DECIMAL)
+   vol_tokena_day = Column(DECIMAL)
+   vol_tokena_week = Column(DECIMAL)
+   vol_tokena_month = Column(DECIMAL)
+   vol_tokenb_day = Column(DECIMAL)
+   vol_tokenb_week = Column(DECIMAL)
+   vol_tokenb_month = Column(DECIMAL)
+   fee_apr_day = Column(DECIMAL)
+   fee_apr_week = Column(DECIMAL)
+   fee_apr_month = Column(DECIMAL)
+   rewarda_apr_day = Column(DECIMAL)
+   rewarda_apr_week = Column(DECIMAL)
+   rewarda_apr_month = Column(DECIMAL)
+   rewardb_apr_day = Column(DECIMAL)
+   rewardb_apr_week = Column(DECIMAL)
+   rewardb_apr_month = Column(DECIMAL)
+   total_apr_day = Column(DECIMAL)
+   total_apr_week = Column(DECIMAL)
+   total_apr_month = Column(DECIMAL)
    pool_age = Column(Integer)
 
 class DeFiTokenPrice(Base):
@@ -60,6 +57,18 @@ class DeFiPoolActivities(Base):
    transaction_signature = Column(String)
 
 
+class DeFiSwapActivities(Base):
+   __tablename__ = "defi_swap_activities"
+   txn_time = Column(DateTime(timezone=False) , primary_key=True)
+   program_address = Column(String)
+   aggregator_address = Column(String)
+   user_account = Column(String)
+   source_mint = Column(String)
+   destination_mint = Column(String)
+   source_amount = Column(DECIMAL)
+   destination_amount = Column(DECIMAL)
+   transaction_signature = Column(String)
+
 class DeFiProductMaster(Base):
    __tablename__ = "defi_product_master"
    product_id = Column(Integer, primary_key=True)
@@ -68,13 +77,16 @@ class DeFiProductMaster(Base):
    pool_name = Column(String)
    pool_address = Column(String)
    token_a_name = Column(String)
-   token_a_ticker = Column(String)
+   token_a_symbol = Column(String)
    token_a_address = Column(String)
+   token_a_decimals = Column(SMALLINT)
    token_b_name = Column(String)
-   token_b_ticker = Column(String)
+   token_b_symbol = Column(String)
    token_b_address = Column(String)
+   token_b_decimals = Column(SMALLINT)
    inspection_date = Column(DateTime(timezone=False))
-   fee_rate = Column(DECIMAL)
+   lp_fee_rate = Column(DECIMAL)
+   protocol_fee_rate = Column(DECIMAL)
    created_at = Column(DateTime(timezone=False), server_default=func.now())
 
 class DeFiPoolEmissions(Base):

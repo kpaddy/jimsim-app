@@ -13,6 +13,7 @@ from sqlalchemy.dialects.postgresql import insert
 
 pat = r'.*?\[(.*)].*'
 orca_pools_endpoint = "https://api.orca.so/allPools"
+orca_whirlpools_endpoint = "https://api.mainnet.orca.so/v1/whirlpool/list"
 lifinity_pools_endpoint = "https://lifinity.io/api/poolinfo"
 radiyum_pools_endpoint = "https://api.raydium.io/v2/main/pairs"
 
@@ -29,7 +30,6 @@ class DeFiDBProcessor( object ):
    def save_product_master( self, rows ):
       stmt = insert( DeFiProductMaster, ).values(rows)    
       self._conn.execute(stmt)
-
 
 def fetch_data( end_point ):
    resp = requests.get( end_point )
@@ -61,25 +61,68 @@ class OrcaProcessor(object):
    def __init__(self) -> None:
       pass
    def transform(self, rec):
-      #print( "rec['poolId'] ", rec['poolId'] )
-      if "[" in rec['poolId']:
-         market = re.search(pat, rec['poolId']).group(1)
-         pair = rec['poolId'][0:rec['poolId'].find('[')].replace("/", '_')
-         protocol = "ORCA-" + market.capitalize()
-      else:
-         pair = rec['poolId'].replace("/", '_')
-         protocol = "ORCA"
-
-      newdoc = {'pair': pair, 'protocol':protocol, 'yield_type':'POOL', 'apy_info':'coming soon',
-         'apy': round( float(rec['apy']['month'])*100 , 3) , 'apy_history':0,  'pool_age':None, 
-         'tvl': int(rec['poolTokenSupply']), 'tvl_history':None,
-         'vol': float(rec['volume']['day']), 'vol_history':None}
-      return newdoc 
-
-   async def get_pool_stats(self):
+      pass
+   def get_auqafarm_pool_stats(self):
       data = fetch_data( orca_pools_endpoint )
-      repsonse = [self.transform(v) for v in data.values()]
-      return repsonse 
+      #repsonse = [self.transform(v) for v in data.values()]
+      return data 
+
+   def save_whirlpool_master_data_to_db(self):
+      orca_data = fetch_data( orca_whirlpools_endpoint )
+      #orca_file = open("../samples/orca_whirlpool_stats.json", 'w')
+      #json.dump(orca_data, orca_file)
+      db_recs = []
+      for item in orca_data["whirlpools"]:
+         pool_name = f"{item['tokenA']['symbol']}-{item['tokenB']['symbol']}"
+         db_rec = {
+         'product_type':'LiquidityPool' , 'project_name':'ORCA-Whirlpools', 
+         'pool_name': pool_name, 'pool_address':item['address'], 
+         'token_a_name':item['tokenA']['name'], 'token_a_symbol':item['tokenA']['symbol'], 'token_a_address':item['tokenA']['mint'], 'token_a_decimals':item['tokenA']['decimals'], 
+         'token_b_name':item['tokenB']['name'], 'token_b_symbol':item['tokenB']['symbol'], 'token_b_address':item['tokenB']['mint'], 'token_b_decimals':item['tokenB']['decimals'],
+         'inspection_date':None, 'lp_fee_rate':item['lpFeeRate'] , 'protocol_fee_rate':item['protocolFeeRate']     }
+         db_recs.append(db_rec)
+      DeFiDBProcessor().save_product_master( db_recs  )
+
+   def save_whirlpool_stats_data_to_db(self):
+      orca_data = fetch_data( orca_whirlpools_endpoint )
+      performance_rows = []
+      for item in orca_data["whirlpools"]:
+         if 'tvl' not in item:
+            continue
+         rec = {
+            'txn_time' : datetime.now() , 
+            'partition_by_day' : datetime.now().day,
+            'pool_address' : item['address'], 
+            'protocol_name' : 'ORCA-Whirlpools',
+            'yield_type' : 'LP', 
+            'price' : item['price'],
+            'tvl' : item['tvl'], 
+            'vol_day' : item['volume']['day'],
+            'vol_week' : item['volume']['week'],
+            'vol_month' : item['volume']['month'],
+            'vol_tokena_day' : item['volumeDenominatedA']['day'],
+            'vol_tokena_week' : item['volumeDenominatedA']['week'],
+            'vol_tokena_month' : item['volumeDenominatedA']['month'],
+            'vol_tokenb_day' :  item['volumeDenominatedB']['day'],
+            'vol_tokenb_week' : item['volumeDenominatedB']['week'],
+            'vol_tokenb_month' :  item['volumeDenominatedB']['month'],
+            'fee_apr_day' :  item['feeApr']['day'],
+            'fee_apr_week' :  item['feeApr']['week'],
+            'fee_apr_month' :  item['feeApr']['month'],
+            'rewarda_apr_day' :  item['feeApr']['day'],
+            'rewarda_apr_week' :  item['feeApr']['week'],
+            'rewarda_apr_month' :  item['reward0Apr']['month'],
+            'rewardb_apr_day' :  item['reward1Apr']['day'],
+            'rewardb_apr_week' :  item['reward1Apr']['week'],
+            'rewardb_apr_month' :  item['reward1Apr']['month'],
+            'total_apr_day' : item['totalApr']['day'],
+            'total_apr_week' : item['totalApr']['week'],
+            'total_apr_month' : item['totalApr']['month'],
+            'pool_age' : None
+         }
+         performance_rows.append( rec )
+      DeFiDBProcessor().save_pool_performance_to_db( performance_rows   )
+
 
 class RadiyumProcessor(object):
    def __init__(self) -> None:
@@ -117,24 +160,26 @@ async def transform_to_db(rows):
       result_list.append( newrow )
    return result_list
 
-async def save_to_db( rows ):
+async def save_to_db( ):
+   '''
    rows = await transform_to_db( rows )
    print(f"total records {len(rows)}")
    db = DeFiDBProcessor( )
    db.save_pool_performance_to_db( rows )
-   #db.save_pool_performance_to_db( rows[2000:] )
-   #names = [r['protocol_id'] for r in rows[4500:]]
-   #print( names )
+   #OrcaProcessor().save_whirlpool_master_data_to_db()
+   '''
+   #OrcaProcessor().save_whirlpool_master_data_to_db()
+   OrcaProcessor().save_whirlpool_stats_data_to_db()
 
 async def fetch_all_data( ):
-   radiyum_task = asyncio.create_task( RadiyumProcessor().get_pool_stats() )
-   orca_task = asyncio.create_task( OrcaProcessor().get_pool_stats() )
-   lifinity_task = asyncio.create_task( LifinityProcessor().get_pool_stats() )
-   reponse_list = await asyncio.gather( *[radiyum_task, orca_task, lifinity_task] )
-   data = list(chain(*reponse_list))
-   print(len(data))
-   await save_to_db( data )
-
+   #radiyum_task = asyncio.create_task( RadiyumProcessor().get_pool_stats() )
+   #orca_task = asyncio.create_task( OrcaProcessor().get_pool_stats() )
+   #lifinity_task = asyncio.create_task( LifinityProcessor().get_pool_stats() )
+   #reponse_list = await asyncio.gather( *[radiyum_task, orca_task, lifinity_task] )
+   #data = list(chain(*reponse_list))
+   #print(len(data))
+   #await save_to_db( data )
+   await save_to_db()
 
 def run():
    try:
@@ -144,37 +189,4 @@ def run():
       print('error')
       return []
 
-def save_master_data( ):
-   row1 = { 'product_type':'LiquidityPool' , 'project_name':'ORCA', 
-      'pool_name':'stSOL-SOL', 'pool_address':'2AEWSvUds1wsufnsDPCXjFsJCMJH5SNNm7fSF4kxys9a', 
-      'token_a_name':'Lido SOL', 'token_a_ticker':'stSOL', 'token_a_address':'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',
-      'token_b_name':'Orca SOL', 'token_b_ticker':'SOL', 'token_b_address':'HZRCwxP2Vq9PCpPXooayhJ2bxTpo5xfpQrwB1svh332p', 
-      'inspection_date':None, 'fee_rate':0.01} 
-
-   row2 = { 'product_type':'LiquidityPool' , 'project_name':'ORCA', 
-      'pool_name':'SLCL-USDC', 'pool_address':'8Gbr3TGdVhEABN52yxBqUfLxMXQqh8KRuEb44joHwHAN', 
-      'token_a_name':'Social Token', 'token_a_ticker':'SLCL', 'token_a_address':'SLCLww7nc1PD2gQPQdGayHviVVcpMthnqUz2iWKhNQV',
-      'token_b_name':'Orca', 'token_b_ticker':'USDC', 'token_b_address':'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE', 
-      'inspection_date':None, 'fee_rate':0.3} 
-
-   DeFiDBProcessor().save_product_master( [row1, row2] )
-
-@cachetools.func.ttl_cache(maxsize=10000, ttl=2 * 60)
-def retrive_data():
-   return run()   
- 
-save_master_data()
-
-'''
-@functions_framework.http
-def hello_http(request):
-   request_json = request.get_json(silent=True)   
-   return {"data": retrive_data() }
-
 run()
-'''
-#asyncio.run(  RadiyumProcessor().get_pool_stats() )
-#asyncio.run(  fetch_all_data() )
-
-
-

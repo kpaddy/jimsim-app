@@ -52,6 +52,7 @@ df.to_csv("solana_chains.csv", index=False)
 #df.loc[ df["chain"] == "Solana"].to_csv("solana_chains.csv", index=False)
 
 #df2 = df.groupby(['chain']).count().sort_values( by=["symbol"] , ascending=False)
+''' 
 resp = requests.get(solana_tokens_endpoint_2)
 data = resp.json()
 print(f'Solana has {len(data["tokens"])} tokens ')
@@ -59,3 +60,5 @@ lifinty_tokens = [t for t in data["tokens"] if "lifinity"in t["name"].lower() ]
 for t in lifinty_tokens:
    print( t )
    #break
+'''
+

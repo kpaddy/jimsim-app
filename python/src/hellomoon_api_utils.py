@@ -1,6 +1,6 @@
 import requests
 import json 
-from data_models import DeFiPoolActivities
+from data_models import DeFiPoolActivities, DeFiSwapActivities
 from sqlalchemy import create_engine, select, distinct, engine
 from sqlalchemy import Table, Column, Integer, String, MetaData, DateTime, BigInteger, TIMESTAMP, Boolean, DECIMAL, JSON, DATE
 from sqlalchemy.dialects.postgresql import insert
@@ -45,20 +45,6 @@ RAY_SOL_USDC = {
 class DefiPoolActivitiesProcessor( object ):
    def __init__(self ) -> None:
       conn_string = 'postgresql://{}:{}@{}/{}'.format( os.getenv("db_user") , os.getenv("db_pass"), os.getenv("db_host"), os.getenv("db_name"))
-      '''
-      self.db  = create_engine(
-            engine.url.URL(
-            drivername=driver_name,
-            username= os.getenv("db_user") ,
-            password=os.getenv("db_pass"),
-            database=os.getenv("db_name"),
-            query=query_string,
-      ),
-      pool_size=5,
-      max_overflow=2,
-      pool_timeout=30,
-      pool_recycle=1800)
-      '''
       self.db = create_engine(conn_string)
       self._conn = self.db.connect()
 
@@ -66,22 +52,9 @@ class DefiPoolActivitiesProcessor( object ):
       stmt = insert( DeFiPoolActivities, ).values(rows)    
       self._conn.execute(stmt)
 
-
-RAY_RAY_USDC = {
-         "program": "Raydium",
-         "poolAddress": None,
-         "poolName": "RAY - USDC",
-         "mintTokenA": "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
-         "nameTokenA": "Raydium",
-         "mintTokenB": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-         "nameTokenB": "USD Coin",
-         "tokenAccountA": "FdmKUE4UMiJYFK5ogCngHzShuVKrFXBamPWcewDr31th",
-         "tokenAccountB": "Eqrhxd7bDUCH3MepKmdVkgwazXRzY6iHhEoBpY7yAohk",
-         "balanceTokenALamports": "5878212475792",
-         "balanceTokenBLamports": "1377760214558",
-         "balanceTokenA": 5878212.475792,
-         "balanceTokenB": 1377760.214558
-      }
+   def save_swaps_to_db(self, rows) :
+      stmt = insert( DeFiSwapActivities, ).values(rows)    
+      self._conn.execute(stmt)
 
 #jan21
 EPOCTIME = 1674309533
@@ -90,16 +63,18 @@ def get_pool_withdrawls_deposits( token1, token2, t1, t2 ):
    url = "https://rest-api.hellomoon.io/v0/defi/liquidity-pools/withdrawals-deposits"
    payload = {
       "tokenMintA": token1,
-      "tokenMintB": token2
+      "tokenMintB": token2,
+      "limit": 100
+
    }   
    headers = {
          "accept": "application/json",
       "content-type": "application/json",
-      "authorization": "Bearer 768ea71c-f3e5-43eb-8b1e-7c8b0109eef7"
+      "authorization": os.getenv("hellomoon_api")
    }
    response = requests.post(url, json=payload, headers=headers)
-   outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_w_d.json", 'w')
-   json.dump ( response.json(), outfile )
+   #outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_w_d.json", 'w')
+   #json.dump ( response.json(), outfile )
    data = response.json()
    new_recs = []
    mapping = {'programId':'program_id', 'actionType':'action_type', 'blockTime':'txn_time', 'userAccount':'user_account', 'tokenMintA':'token_mint_a', 'tokenMintB':'token_mint_b', 'amountTokenA':'amount_token_a', 'amountTokenB':'amount_token_b' , 'transactionId':'transaction_signature'}
@@ -107,9 +82,40 @@ def get_pool_withdrawls_deposits( token1, token2, t1, t2 ):
       newrow = { v : row[k] for k,v in mapping.items() }
       newrow['txn_time'] = datetime.fromtimestamp( int(newrow['txn_time']) )
       new_recs.append( newrow )
-      print( newrow['transaction_signature'])
-   DefiPoolActivitiesProcessor().save_activities_to_db( new_recs )
+      #print( newrow['transaction_signature'])
+   if len(new_recs) > 0:
+      print(f"Save {len(new_recs)} records to defi_pool_activities table ")
+      DefiPoolActivitiesProcessor().save_activities_to_db( new_recs )
 
+def get_swaps_records( token1, token2 ):
+   url = "https://rest-api.hellomoon.io/v0/defi/swaps"
+   payload = {
+      "sourceMint": token1,
+      "destinationMint": token2,
+      "limit": 100,
+      "programId": "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
+
+   }   
+   headers = {
+      "accept": "application/json",
+      "content-type": "application/json",
+      "authorization": os.getenv("hellomoon_api")
+   }
+   response = requests.post(url, json=payload, headers=headers)
+   #outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_w_d.json", 'w')
+   #json.dump ( response.json(), outfile )
+   data = response.json()
+   new_recs = []
+   mapping = {'userAccount':'user_account', 'sourceMint':'source_mint', 'destinationMint':'destination_mint', 
+      'programId':'program_address', 'aggregatorId':'aggregator_address', 'sourceAmount':'source_amount', 'destinationAmount':'destination_amount', 'blockTime':'txn_time' , 'transactionId':'transaction_signature'}
+   for row in data["data"] :
+      newrow = { v : row[k] for k,v in mapping.items() }
+      newrow['txn_time'] = datetime.fromtimestamp( int(newrow['txn_time']) )
+      new_recs.append( newrow )
+      #print( newrow['transaction_signature'])
+   if len(new_recs) > 0:
+      print(f"Save {len(new_recs)} swap records to defi_swap_activities table ")
+      DefiPoolActivitiesProcessor().save_swaps_to_db( new_recs )
 
 def get_pool_emissions( pool_address, t1, t2 ):
    url = "https://rest-api.hellomoon.io/v0/defi/liquidity-pools/emissions"
@@ -117,7 +123,7 @@ def get_pool_emissions( pool_address, t1, t2 ):
    headers = {
          "accept": "application/json",
       "content-type": "application/json",
-      "authorization": "Bearer 768ea71c-f3e5-43eb-8b1e-7c8b0109eef7"
+      "authorization": os.getenv("hellomoon_api")
    }
    response = requests.post(url, json=payload, headers=headers)
    outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_emissions.json", 'w')
@@ -131,7 +137,7 @@ def get_ray_pool_balances( tokenA, tokenB, t1, t2):
    headers = {
       "accept": "application/json",
       "content-type": "application/json",
-      "authorization": "Bearer 768ea71c-f3e5-43eb-8b1e-7c8b0109eef7"
+      "authorization": os.getenv("hellomoon_api")
    }
    response = requests.post(pool_balance_endpoint, json=payload, headers=headers)
    outfile = open(f"../data/hellomoon_ray_{t1}-{t2}_pool_balance.json", 'w')
@@ -146,7 +152,7 @@ def get_orca_pool_balances( pool_address, t1, t2):
    headers = {
       "accept": "application/json",
       "content-type": "application/json",
-      "authorization": "Bearer 768ea71c-f3e5-43eb-8b1e-7c8b0109eef7"
+      "authorization": os.getenv("hellomoon_api")
    }
    response = requests.post(pool_balance_endpoint, json=payload, headers=headers)
    outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_balance.json", 'w')
@@ -158,11 +164,12 @@ def get_orca_pool_balances( pool_address, t1, t2):
 #response = get_orca_pool_balances( ORCA_MSOL_USDC, 'mSOL', 'USDC' )
 #response = get_orca_pool_balances( ORCA_SOL_USDC, 'SOL', 'USDC' )
 
-get_pool_emissions( ORCA_STSOL_SOL, 'stSOL', 'SOL' ) 
-get_pool_emissions( ORCA_SLCL_USDC, 'SLCL', 'USDC' )
+#get_pool_emissions( ORCA_STSOL_SOL, 'stSOL', 'SOL' ) 
+#get_pool_emissions( ORCA_SLCL_USDC, 'SLCL', 'USDC' )
 
-#get_pool_withdrawls_deposits(SOL, USDC, 'SOL', 'USDC')
-
-
+get_pool_withdrawls_deposits(SOL, USDC, 'SOL', 'USDC')
+get_swaps_records(SOL, USDC)
 #Wrapped SOL ==> So11111111111111111111111111111111111111112
 #USDC ==> EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+
