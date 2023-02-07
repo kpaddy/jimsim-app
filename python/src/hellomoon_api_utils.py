@@ -1,13 +1,11 @@
 import requests
 import json 
 from data_models import DeFiPoolActivities, DeFiSwapActivities
-from sqlalchemy import create_engine, select, distinct, engine
-from sqlalchemy import Table, Column, Integer, String, MetaData, DateTime, BigInteger, TIMESTAMP, Boolean, DECIMAL, JSON, DATE
+from sqlalchemy import create_engine 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 from sqlalchemy.sql import func
-from sqlalchemy.engine import make_url
 from datetime import datetime 
 import os 
 
@@ -23,24 +21,7 @@ ORCA_USDC_USDT = "GjpXgKwn4VW4J2pZdS3dovM58hiXWLJtopTfqG83zY2f"
 ORCA_SLCL_USDC = "8Gbr3TGdVhEABN52yxBqUfLxMXQqh8KRuEb44joHwHAN"
 ORCA_STSOL_SOL = "2AEWSvUds1wsufnsDPCXjFsJCMJH5SNNm7fSF4kxys9a"
 
-
 pool_balance_endpoint = "https://rest-api.hellomoon.io/v0/defi/liquidity-pools/balances"
-
-RAY_SOL_USDC = {
-         "program": "Raydium",
-         "poolAddress": None,
-         "poolName": "wSOL - USDC",
-         "mintTokenA": "So11111111111111111111111111111111111111112",
-         "nameTokenA": "Wrapped SOL",
-         "mintTokenB": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-         "nameTokenB": "USD Coin",
-         "tokenAccountA": "DQyrAcCrDXQ7NeoqGgDCZwBvWDcYmFCjSb9JtteuvPpz",
-         "tokenAccountB": "HLmqeL62xR1QoZ1HKKbXRrdN1p3phKpxRMb2VVopvBBz",
-         "balanceTokenALamports": "84202686073907",
-         "balanceTokenBLamports": "2281329888328",
-         "balanceTokenA": 84202.68607390701,
-         "balanceTokenB": 2281329.888328
-}
 
 class DefiPoolActivitiesProcessor( object ):
    def __init__(self ) -> None:
@@ -70,7 +51,7 @@ def get_pool_withdrawls_deposits( token1, token2, t1, t2, pool_address ):
    headers = {
          "accept": "application/json",
       "content-type": "application/json",
-      "authorization": os.getenv("hellomoon_api")
+      "authorization": os.getenv("hellomoon_api_key")
    }
    response = requests.post(url, json=payload, headers=headers)
    #outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_w_d.json", 'w')
@@ -100,7 +81,7 @@ def get_swaps_records( token1, token2, pool_address ):
    headers = {
       "accept": "application/json",
       "content-type": "application/json",
-      "authorization": os.getenv("hellomoon_api")
+      "authorization": os.getenv("hellomoon_api_key")
    }
    response = requests.post(url, json=payload, headers=headers)
    #outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_w_d.json", 'w')
@@ -126,7 +107,7 @@ def get_pool_emissions( pool_address, t1, t2 ):
    headers = {
          "accept": "application/json",
       "content-type": "application/json",
-      "authorization": os.getenv("hellomoon_api")
+      "authorization": os.getenv("hellomoon_api_key")
    }
    response = requests.post(url, json=payload, headers=headers)
    outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_emissions.json", 'w')
@@ -140,7 +121,7 @@ def get_ray_pool_balances( tokenA, tokenB, t1, t2):
    headers = {
       "accept": "application/json",
       "content-type": "application/json",
-      "authorization": os.getenv("hellomoon_api")
+      "authorization": os.getenv("hellomoon_api_key")
    }
    response = requests.post(pool_balance_endpoint, json=payload, headers=headers)
    outfile = open(f"../data/hellomoon_ray_{t1}-{t2}_pool_balance.json", 'w')
@@ -155,7 +136,7 @@ def get_orca_pool_balances( pool_address, t1, t2):
    headers = {
       "accept": "application/json",
       "content-type": "application/json",
-      "authorization": os.getenv("hellomoon_api")
+      "authorization": os.getenv("hellomoon_api_key")
    }
    response = requests.post(pool_balance_endpoint, json=payload, headers=headers)
    outfile = open(f"../data/hellomoon_orca_{t1}-{t2}_pool_balance.json", 'w')
@@ -174,5 +155,3 @@ get_pool_withdrawls_deposits(SOL, USDC, 'SOL', 'USDC', pool_address)
 get_swaps_records(SOL, USDC, pool_address)
 #Wrapped SOL ==> So11111111111111111111111111111111111111112
 #USDC ==> EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-
-

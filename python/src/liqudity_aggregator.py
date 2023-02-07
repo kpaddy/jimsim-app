@@ -62,10 +62,34 @@ class OrcaProcessor(object):
       pass
    def transform(self, rec):
       pass
-   def get_auqafarm_pool_stats(self):
-      data = fetch_data( orca_pools_endpoint )
-      #repsonse = [self.transform(v) for v in data.values()]
-      return data 
+   def save_aquafarm_master_data_to_db(self):
+      orca_w_data = fetch_data( orca_whirlpools_endpoint )
+      token_address_map = {}
+      for item in orca_w_data["whirlpools"]:
+         token_address_map[item["tokenA"]["symbol"]] = {"name":item["tokenA"]["name"], "token_address":item["tokenA"]["mint"]}
+         token_address_map[item["tokenB"]["symbol"]] = {"name":item["tokenB"]["name"], "token_address":item["tokenB"]["mint"]}
+      orca_data = fetch_data( orca_pools_endpoint )
+      db_recs = []
+      for key, item in orca_data.items():
+         if not "[aquafarm]" in key:
+            continue
+         pair_name = key.replace("[aquafarm]", '').replace("/", '-')
+         tokens = pair_name.split("-")
+         pool_name = pair_name
+         try:
+            t_map_a = token_address_map[tokens[0]]
+            t_map_b = token_address_map[tokens[1]]
+            db_rec = {
+            'product_type':'LiquidityPool' , 'project_name':'ORCA-Aquafarm', 
+            'pool_name': pool_name, 'pool_address':item['poolAccount'], 
+            'token_a_name':t_map_a["name"], 'token_a_symbol':tokens[0], 'token_a_address':t_map_a["token_address"], 'token_a_decimals':None, 
+            'token_b_name':t_map_b["name"], 'token_b_symbol':tokens[1], 'token_b_address':t_map_b["token_address"], 'token_b_decimals':None,
+            'inspection_date':None, 'lp_fee_rate':None , 'protocol_fee_rate': None    }
+            db_recs.append(db_rec)
+            print( db_rec )
+         except:
+            pass
+      DeFiDBProcessor().save_product_master( db_recs  )
 
    def save_whirlpool_master_data_to_db(self):
       orca_data = fetch_data( orca_whirlpools_endpoint )
@@ -170,7 +194,8 @@ async def save_to_db( ):
    '''
    #OrcaProcessor().save_whirlpool_master_data_to_db()
    OrcaProcessor().save_whirlpool_stats_data_to_db()
-
+   #OrcaProcessor().save_aquafarm_master_data_to_db()
+   
 async def fetch_all_data( ):
    #radiyum_task = asyncio.create_task( RadiyumProcessor().get_pool_stats() )
    #orca_task = asyncio.create_task( OrcaProcessor().get_pool_stats() )
@@ -185,8 +210,8 @@ def run():
    try:
       respose_data =  asyncio.run( save_to_db() )
       return respose_data
-   except:
-      print('error')
+   except Exception as e:
+      print(e)
       return []
 
 run()
