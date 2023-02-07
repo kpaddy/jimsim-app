@@ -6,7 +6,7 @@ This repo contains the code for the data backend.
 https://youtu.be/_qmZON9IM00
 
 ## Summary
-JimSim is aimed at retail and institutional investors, tired of analysing and validating yield metrics displayed differently by every single yield protocol. A standard has to be established to provide transparency and to build trust in the industry. Trust that is utterly necessary after painful events of Luna and FTX.
+JimSim is aimed at retail and institutional investors, tired of analysing and validating yield metrics displayed differently by every single yield protocol. A standard has to be established to provide transparency and to build trust in the industry. Trust that is utterly necessary after the painful events with Luna and FTX.
 
 And we don't have to look far to find metrics which can assess returns and risks of yield-bearing investment products - and if we are honest to each other, that's what DeFi yield protocols offer: investment products that provide a return. In TradFi there are tons of metrics being used to assess the return and risk of investment products. Profit, Loss, Profit Factor, Drawdown, Volatility, and even metrics like Sharpe Ratio, Sortino Ratio and Treynor Ratio
 
