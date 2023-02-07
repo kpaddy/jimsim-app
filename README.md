@@ -12,7 +12,7 @@ And we don't have to look far to find metrics which can assess returns and risks
 
 But none of the DeFi data platforms provide these metrics.
 
-For the scope of this hackathon we aimed at collecting the data and getting it into a consumable format so that we can do the necessary calculations in the next step.
+For the scope of this hackathon we aimed at collecting the data and getting it into a consumable format so that we can do the necessary calculations for these metrics in the next step.
 
 ## Challenges
 
