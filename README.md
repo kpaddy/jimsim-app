@@ -2,6 +2,9 @@
 DeFi Yield Analysis Platform.
 This repo contains the code for the data backend.
 
+## Demo Video
+https://youtu.be/_qmZON9IM00
+
 ## Summary
 JimSim is aimed at retail and institutional investors, tired of analysing and validating yield metrics displayed differently by every single yield protocol. A standard has to be established to provide transparency and to build trust in the industry. Trust that is utterly necessary after painful events of Luna and FTX.
 
